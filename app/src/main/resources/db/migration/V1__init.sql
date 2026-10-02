@@ -1,0 +1,2 @@
+-- Initial database schema
+-- Add tables here as needed

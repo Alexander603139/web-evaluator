@@ -5,6 +5,23 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# Module build directories
+core/build/
+api/build/
+auth/build/
+orchestrator/build/
+scenario-bdd/build/
+scenario-exploratory/build/
+scenario-monkey/build/
+scenario-ai/build/
+crawler/build/
+ui-actions/build/
+ai-gateway/build/
+oracle/build/
+reporting/build/
+security/build/
+app/build/
+
 ### STS ###
 .apt_generated
 .classpath
