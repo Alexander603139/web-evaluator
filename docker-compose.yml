@@ -7,42 +7,25 @@ services:
       dockerfile: Dockerfile
     container_name: web-evaluator-app
     ports:
-      - "8080:8080"
+      - "5432:5432"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/web_evaluator
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_FLYWAY_ENABLED: "true"
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=web_evaluator
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
     depends_on:
-      postgres:
-        condition: service_healthy
+      - db
     restart: unless-stopped
 
-  postgres:
-    image: postgres:17-alpine
-    container_name: web-evaluator-postgres
+  db:
+    image: postgres:15-alpine
     environment:
-      POSTGRES_DB: web_evaluator
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+      - POSTGRES_DB=web_evaluator
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  admin-ui:
-    image: nginx:alpine
-    container_name: web-evaluator-admin-ui
-    ports:
-      - "80:80"
-    volumes:
-      - ./admin-ui:/usr/share/nginx/html:ro
     restart: unless-stopped
 
 volumes:
