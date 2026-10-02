@@ -7,10 +7,10 @@ services:
       dockerfile: Dockerfile
     container_name: web-evaluator-app
     ports:
-      - "5432:5432"
+      - "8080:8080"
     environment:
       - DB_HOST=db
-      - DB_PORT=5432
+      - DB_PORT=
       - DB_NAME=web_evaluator
       - DB_USER=postgres
       - DB_PASSWORD=postgres
