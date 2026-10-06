@@ -19,4 +19,8 @@ subprojects {
     dependencyManagement {
         imports { mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}" }
     }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
 }
