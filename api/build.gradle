@@ -11,7 +11,6 @@ dependencies {
     implementation 'org.projectlombok:lombok:' + lombokVersion
     annotationProcessor 'org.projectlombok:lombok:' + lombokVersion
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-web-test'
     testImplementation 'org.junit.jupiter:junit-jupiter:' + junitJupiterVersion
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
