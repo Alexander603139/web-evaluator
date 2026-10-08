@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test Page</title></head>
+<body>
+<h1 id="title">Test Page</h1>
+<button id="click-btn" onclick="incrementClick()">Click me</button>
+<span id="click-counter">0</span>
+
+<input id="text-input" type="text" placeholder="Enter text"/>
+
+<button id="error-btn" onclick="throw new Error('Manual error')">Trigger error</button>
+<a id="fail-link" href="http://localhost:1/nonexistent">Broken link</a>
+
+<select id="dropdown">
+    <option value="opt1">Option 1</option>
+    <option value="opt2">Option 2</option>
+</select>
+
+<input id="checkbox" type="checkbox"/>
+<input id="radio" type="radio" name="group" value="radio1"/>
+
+<script>
+    let clickCount = 0;
+    function incrementClick() {
+        clickCount++;
+        document.getElementById('click-counter').textContent = clickCount;
+    }
+    window.getClickCount = () => clickCount;
+</script>
+</body>
+</html>
