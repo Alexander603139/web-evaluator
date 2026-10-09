@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:web_evaluator;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
