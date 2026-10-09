@@ -37,4 +37,13 @@ public class JobService {
     public Optional<Job> getJob(UUID jobId) {
         return jobRepository.findById(jobId);
     }
+
+    @Transactional(readOnly = true)
+    public java.util.List<Job> listAll() {
+        return jobRepository.findAll(
+                org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "createdAt"
+                )
+        );
+    }
 }

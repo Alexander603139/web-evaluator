@@ -75,4 +75,16 @@ class JobServiceTest {
 
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void listAll_shouldReturnAllJobsFromRepository() {
+        Job job1 = Job.builder().targetUrl("https://a.com").build();
+        Job job2 = Job.builder().targetUrl("https://b.com").build();
+        when(jobRepository.findAll(any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(java.util.List.of(job1, job2));
+
+        java.util.List<Job> result = jobService.listAll();
+
+        assertThat(result).hasSize(2);
+    }
 }

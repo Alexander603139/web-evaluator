@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     api project(':core')
+    api project(':reporting')
     api 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     compileOnly 'org.projectlombok:lombok'

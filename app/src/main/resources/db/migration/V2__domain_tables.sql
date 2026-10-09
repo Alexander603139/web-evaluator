@@ -40,7 +40,7 @@ CREATE TABLE scenarios (
 
 CREATE TABLE jobs (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id        UUID NOT NULL REFERENCES users(id),
+    user_id        UUID REFERENCES users(id),
     scenario_type  VARCHAR(16) NOT NULL CHECK (scenario_type IN ('BDD','EXPLORATORY','MONKEY','AI_DRIVEN')),
     status         VARCHAR(16) NOT NULL CHECK (status IN ('PENDING','RUNNING','SUCCESS','FAILED','CANCELLED')),
     target_url     TEXT  NOT NULL,
