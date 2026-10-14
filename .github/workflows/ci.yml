@@ -1,16 +1,13 @@
 name: Deploy to Timeweb (Java)
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   push:
     branches: [ "main" ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,11 +32,13 @@ jobs:
             cd /opt/web-evaluator
             cat > .env << 'EOF'
             DB_HOST=db
-            DB_PORT=
+            DB_PORT=5432
             DB_NAME=web_evaluator
             DB_USER=postgres
             DB_PASSWORD=postgres
             SERVER_PORT=8080
+            ADMIN_USERNAME=admin
+            ADMIN_PASSWORD=change-me-in-production
             EOF
 
       - name: Restart Docker containers
@@ -50,7 +49,24 @@ jobs:
           key: ${{ secrets.TIMEWEB_SSH_KEY }}
           script: |
             cd /opt/web-evaluator
+            echo "=== [1/4] Stopping containers ==="
             docker compose down
-            docker compose pull
-            docker compose up -d --build
+            
+            echo "=== [2/4] Building images with clean ==="
+            docker compose build --no-cache
+            
+            echo "=== [3/4] Starting containers ==="
+            docker compose up -d --remove-orphans
+            
+            echo "=== [4/4] Healthcheck ==="
+            sleep 20
+            if curl -fs --max-time 5 "http://localhost:8080/actuator/health" > /dev/null 2>&1; then
+              echo "✅ Application is healthy"
+            else
+              echo "❌ Healthcheck failed. Last 50 lines of logs:"
+              docker compose logs --tail=50
+              exit 1
+            fi
+            
             docker image prune -f
+            echo "🎉 Deploy completed successfully"
