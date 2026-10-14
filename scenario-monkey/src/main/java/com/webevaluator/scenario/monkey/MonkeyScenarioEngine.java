@@ -134,6 +134,9 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
         } catch (Exception e) {
             // Игнорируем ошибки клика (элемент мог исчезнуть)
             log.debug("Action skipped: {}", e.getMessage());
+            if (action.isEmpty()) {
+                action = "unknown";  // чтобы не было пустых действий в отчёте
+            }
             status = "skipped";
         }
 
