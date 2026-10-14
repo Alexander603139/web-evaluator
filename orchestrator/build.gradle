@@ -6,6 +6,10 @@ plugins {
 dependencies {
     api project(':core')
     api project(':reporting')
+    api project(':scenario-monkey')
+    api project(':scenario-bdd')
+    api project(':scenario-exploratory')
+    api project(':scenario-ai')
     api 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     compileOnly 'org.projectlombok:lombok'

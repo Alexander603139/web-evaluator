@@ -3,7 +3,11 @@ package com.webevaluator.orchestrator.worker;
 import com.webevaluator.core.domain.Job;
 import com.webevaluator.core.domain.JobStatus;
 import com.webevaluator.core.domain.ScenarioType;
+import com.webevaluator.core.scenario.ScenarioContext;
+import com.webevaluator.core.scenario.ScenarioEngine;
+import com.webevaluator.core.scenario.ScenarioResult;
 import com.webevaluator.orchestrator.repository.JobRepository;
+import com.webevaluator.orchestrator.scenario.ScenarioRegistry;
 import com.webevaluator.reporting.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +29,8 @@ class JobWorkerTest {
 
     @Mock private JobRepository jobRepository;
     @Mock private ReportService reportService;
+    @Mock private ScenarioRegistry scenarioRegistry;
+    @Mock private ScenarioEngine scenarioEngine;
     @InjectMocks private JobWorker jobWorker;
 
     private Job makePendingJob() {
@@ -42,7 +48,15 @@ class JobWorkerTest {
         Job job = makePendingJob();
         when(jobRepository.findFirstPendingWithLock()).thenReturn(Optional.of(job));
         when(jobRepository.save(any(Job.class))).thenAnswer(i -> i.getArgument(0));
-
+        when(scenarioRegistry.get(any(ScenarioType.class))).thenReturn(scenarioEngine);
+        when(scenarioEngine.execute(any(ScenarioContext.class))).thenReturn(
+                ScenarioResult.builder()
+                        .totalSteps(5)
+                        .errorCount(0)
+                        .goalAchieved(true)
+                        .steps(List.of())
+                        .build()
+        );
         jobWorker.processNextJob();
 
         ArgumentCaptor<Job> captor = ArgumentCaptor.forClass(Job.class);
@@ -60,6 +74,15 @@ class JobWorkerTest {
         Job job = makePendingJob();
         when(jobRepository.findFirstPendingWithLock()).thenReturn(Optional.of(job));
         when(jobRepository.save(any(Job.class))).thenAnswer(i -> i.getArgument(0));
+        when(scenarioRegistry.get(any(ScenarioType.class))).thenReturn(scenarioEngine);
+        when(scenarioEngine.execute(any(ScenarioContext.class))).thenReturn(
+                ScenarioResult.builder()
+                        .totalSteps(5)
+                        .errorCount(0)
+                        .goalAchieved(true)
+                        .steps(List.of())
+                        .build()
+        );
         doThrow(new RuntimeException("DB error"))
                 .when(jobRepository).save(argThat(j -> j.getStatus() == JobStatus.RUNNING));
 
@@ -75,7 +98,15 @@ class JobWorkerTest {
     @Test
     void processNextJob_shouldDoNothingWhenNoPendingJobs() {
         when(jobRepository.findFirstPendingWithLock()).thenReturn(Optional.empty());
-
+        when(scenarioRegistry.get(any(ScenarioType.class))).thenReturn(scenarioEngine);
+        when(scenarioEngine.execute(any(ScenarioContext.class))).thenReturn(
+                ScenarioResult.builder()
+                        .totalSteps(5)
+                        .errorCount(0)
+                        .goalAchieved(true)
+                        .steps(List.of())
+                        .build()
+        );
         jobWorker.processNextJob();
 
         verify(jobRepository, never()).save(any());

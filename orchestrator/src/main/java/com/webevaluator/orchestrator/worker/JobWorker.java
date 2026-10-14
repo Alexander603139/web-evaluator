@@ -2,7 +2,11 @@ package com.webevaluator.orchestrator.worker;
 
 import com.webevaluator.core.domain.Job;
 import com.webevaluator.core.domain.JobStatus;
+import com.webevaluator.core.scenario.ScenarioContext;
+import com.webevaluator.core.scenario.ScenarioEngine;
+import com.webevaluator.core.scenario.ScenarioResult;
 import com.webevaluator.orchestrator.repository.JobRepository;
+import com.webevaluator.orchestrator.scenario.ScenarioRegistry;
 import com.webevaluator.reporting.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -21,6 +23,7 @@ public class JobWorker {
 
     private final JobRepository jobRepository;
     private final ReportService reportService;
+    private final ScenarioRegistry scenarioRegistry;
 
     @Transactional
     public void processNextJob() {
@@ -35,27 +38,21 @@ public class JobWorker {
             job.setStartedAt(OffsetDateTime.now());
             jobRepository.save(job);
 
-            Thread.sleep(2000);
+            ScenarioEngine engine = scenarioRegistry.get(job.getScenarioType());
+            ScenarioContext context = ScenarioContext.builder()
+                    .jobId(job.getId())
+                    .targetUrl(job.getTargetUrl())
+                    .scenarioConfig(job.getRequestParams())
+                    .build();
 
-            // Заглушечный отчёт
-            Map<String, Object> summary = Map.of(
-                    "totalSteps", 1,
-                    "errorCount", 0,
-                    "goalAchieved", true
-            );
-            List<Map<String, Object>> steps = List.of(Map.of(
-                    "stepNumber", 1,
-                    "action", "stub_action",
-                    "status", "success",
-                    "timestamp", OffsetDateTime.now().toString(),
-                    "errors", List.of()
-            ));
-            reportService.saveReport(job, summary, steps);
+            ScenarioResult result = engine.execute(context);
 
-            job.setStatus(JobStatus.SUCCESS);
+            reportService.saveReport(job, result, result.getSteps());
+
+            job.setStatus(result.isGoalAchieved() ? JobStatus.SUCCESS : JobStatus.FAILED);
             job.setFinishedAt(OffsetDateTime.now());
             jobRepository.save(job);
-            log.info("Job {} completed with status SUCCESS", job.getId());
+            log.info("Job {} completed with status {}", job.getId(), job.getStatus());
 
         } catch (Exception e) {
             log.error("Job {} failed", job.getId(), e);

@@ -3,12 +3,15 @@ package com.webevaluator.uiactions;
 import com.microsoft.playwright.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import com.microsoft.playwright.options.LoadState;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
+@Component
 public class PlaywrightActions implements AutoCloseable {
 
     private final Playwright playwright;
@@ -103,6 +106,100 @@ public class PlaywrightActions implements AutoCloseable {
 
     public byte[] takeScreenshot(Path path) {
         return page.screenshot(new Page.ScreenshotOptions().setPath(path));
+    }
+
+    public List<String> findInteractiveElements() {
+        List<String> selectors = new ArrayList<>();
+
+        // Кнопки
+        List<Locator> buttons = page.locator("button:visible").all();
+        for (int i = 0; i < buttons.size(); i++) {
+            selectors.add("button >> nth=" + i);
+        }
+
+        // Ссылки
+        List<Locator> links = page.locator("a[href]:visible").all();
+        for (int i = 0; i < links.size(); i++) {
+            selectors.add("a[href] >> nth=" + i);
+        }
+
+        // Поля ввода
+        List<Locator> inputs = page.locator("input:visible, textarea:visible").all();
+        for (int i = 0; i < inputs.size(); i++) {
+            selectors.add("input, textarea >> nth=" + i);
+        }
+
+        // Элементы с role='button'
+        List<Locator> roleButtons = page.locator("[role='button']:visible").all();
+        for (int i = 0; i < roleButtons.size(); i++) {
+            selectors.add("[role='button'] >> nth=" + i);
+        }
+
+        return selectors;
+    }
+
+    public String getElementType(String selector) {
+        Locator loc = parseSelector(selector);
+        return loc.evaluate("el => el.tagName.toLowerCase()").toString();
+    }
+
+    public void clickWithForce(String selector) {
+        parseSelector(selector).click(new Locator.ClickOptions().setForce(true));
+        wait(200);
+    }
+
+    public void type(String selector, String text) {
+        parseSelector(selector).fill(text);
+        wait(100);
+    }
+
+    public void pressEnter() {
+        page.keyboard().press("Enter");
+        wait(100);
+    }
+
+    public void scroll(int deltaX, int deltaY) {
+        page.mouse().wheel(deltaX, deltaY);
+        wait(100);
+    }
+
+    public void waitForLoadState(LoadState state) {
+        page.waitForLoadState(state);
+    }
+
+    public void clearErrors() {
+        pageErrors.clear();
+        networkErrors.clear();
+    }
+
+    public String generateRandomText() {
+        String chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt((int)(Math.random() * chars.length())));
+        }
+        return sb.toString();
+    }
+
+    private Locator parseSelector(String selector) {
+        if (selector.contains(">> nth=")) {
+            String[] parts = selector.split(" >> nth=");
+            int index = Integer.parseInt(parts[1]);
+            return page.locator(parts[0]).nth(index);
+        }
+        return page.locator(selector);
+    }
+
+    private void wait(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public void waitForLoadState(String state) {
+        page.waitForLoadState(LoadState.valueOf(state.toUpperCase()));
     }
 
     @Override

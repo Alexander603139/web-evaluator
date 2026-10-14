@@ -1,14 +1,21 @@
 plugins {
     id 'java-library'
+    id 'io.spring.dependency-management'
 }
 
 dependencies {
     api project(':core')
     api project(':ui-actions')
 
-    implementation 'org.projectlombok:lombok:' + lombokVersion
-    annotationProcessor 'org.projectlombok:lombok:' + lombokVersion
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter:' + junitJupiterVersion
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
