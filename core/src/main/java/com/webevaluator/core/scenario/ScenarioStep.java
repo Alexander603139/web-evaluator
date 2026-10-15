@@ -9,7 +9,6 @@ import java.util.List;
 
 @Data
 @Builder
-@JsonInclude(JsonInclude.Include.ALWAYS)
 public class ScenarioStep {
     private int stepNumber;
     private String action;       // click, type, scroll

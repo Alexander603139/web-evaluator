@@ -42,6 +42,7 @@ public class JobResponse {
     public static class Step {
         private int stepNumber;
         private String action;
+        private String target;
         private String status;
         private OffsetDateTime timestamp;
         private List<String> errors;
