@@ -74,15 +74,6 @@ class JobWorkerTest {
         Job job = makePendingJob();
         when(jobRepository.findFirstPendingWithLock()).thenReturn(Optional.of(job));
         when(jobRepository.save(any(Job.class))).thenAnswer(i -> i.getArgument(0));
-        when(scenarioRegistry.get(any(ScenarioType.class))).thenReturn(scenarioEngine);
-        when(scenarioEngine.execute(any(ScenarioContext.class))).thenReturn(
-                ScenarioResult.builder()
-                        .totalSteps(5)
-                        .errorCount(0)
-                        .goalAchieved(true)
-                        .steps(List.of())
-                        .build()
-        );
         doThrow(new RuntimeException("DB error"))
                 .when(jobRepository).save(argThat(j -> j.getStatus() == JobStatus.RUNNING));
 
@@ -98,15 +89,6 @@ class JobWorkerTest {
     @Test
     void processNextJob_shouldDoNothingWhenNoPendingJobs() {
         when(jobRepository.findFirstPendingWithLock()).thenReturn(Optional.empty());
-        when(scenarioRegistry.get(any(ScenarioType.class))).thenReturn(scenarioEngine);
-        when(scenarioEngine.execute(any(ScenarioContext.class))).thenReturn(
-                ScenarioResult.builder()
-                        .totalSteps(5)
-                        .errorCount(0)
-                        .goalAchieved(true)
-                        .steps(List.of())
-                        .build()
-        );
         jobWorker.processNextJob();
 
         verify(jobRepository, never()).save(any());

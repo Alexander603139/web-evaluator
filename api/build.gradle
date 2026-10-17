@@ -4,7 +4,6 @@ plugins {
 
 dependencies {
     api project(':core')
-    api project(':security')
     api project(':orchestrator')
     api project(':reporting')
 
