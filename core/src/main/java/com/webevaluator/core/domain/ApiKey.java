@@ -23,11 +23,13 @@ public class ApiKey {
     private String keyHash;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean isActive = true;
 
     @Column(name = "last_used_at")
     private OffsetDateTime lastUsedAt;
 
     @Column(length = 255)
+    @Builder.Default
     private String permissions = "READ,WRITE"; // Улучшение 3: метаданные
 }
