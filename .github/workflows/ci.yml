@@ -58,8 +58,6 @@ jobs:
           key: ${{ secrets.TIMEWEB_SSH_KEY }}
           script: |
             cd /opt/web-evaluator
-#            echo "=== [1/4] Stopping containers ==="
-#            docker compose down
             echo "=== [1/4] Stopping containers and removing volumes ==="
             docker compose down -v
             docker volume prune -f
