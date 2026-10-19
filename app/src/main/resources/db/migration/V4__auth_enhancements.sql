@@ -1,10 +1,9 @@
 -- Добавляем недостающие метаданные в api_keys
 ALTER TABLE api_keys
 ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS permissions VARCHAR(255) DEFAULT 'READ,WRITE';
 
--- Создаем таблицу для управления refresh-токенами (возможность отзыва)
+-- Создаем таблицу для управления refresh-токенами
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
