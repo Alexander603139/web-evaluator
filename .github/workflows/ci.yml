@@ -62,7 +62,7 @@ jobs:
 #            docker compose down
             echo "=== [1/4] Stopping containers and removing volumes ==="
             docker compose down -v
-            docker volume prune -f --filter "label=org.dockercompose.project=web-evaluator"
+            docker volume prune -f
             
             echo "=== [2/4] Building images with clean ==="
             docker compose build --no-cache
