@@ -22,7 +22,7 @@ public class RefreshToken {
     @Column(name = "expires_at", nullable = false)
     private OffsetDateTime expiresAt;
 
-    @Column(name = "is_revoked", nullable = false)
+    @Column(name = "revoked", nullable = false)
     @Builder.Default
     private boolean revoked = false; // Улучшение 2: управление отзывом
 }
