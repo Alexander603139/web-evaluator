@@ -8,9 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ApiKeyRepository extends JpaRepository<ApiKey, UUID> {
-    Optional<ApiKey> findByKeyHash(String keyHash);
     Optional<ApiKey> findByKeyHashAndIsActiveTrue(String keyHash);
-    List<ApiKey> findByUserIdAndRevokedAtIsNull(UUID userId);
     List<ApiKey> findByUserAndIsActiveTrue(User user);
     Optional<ApiKey> findByIdAndUser(UUID id, User user);
 }
