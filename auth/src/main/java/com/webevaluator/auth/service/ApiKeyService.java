@@ -36,6 +36,7 @@ public class ApiKeyService {
                 .user(user)
                 .name(name)
                 .keyHash(keyHash)
+                .keyPrefix("wev")
                 .isActive(true)
                 .permissions("READ,WRITE")
                 .build();

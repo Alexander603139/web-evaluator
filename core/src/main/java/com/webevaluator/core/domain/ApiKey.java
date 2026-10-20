@@ -22,6 +22,9 @@ public class ApiKey {
     @Column(name = "key_hash", nullable = false, length = 255, unique = true)
     private String keyHash;
 
+    @Column(name = "key_prefix", nullable = false, length = 12)
+    private String keyPrefix;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
