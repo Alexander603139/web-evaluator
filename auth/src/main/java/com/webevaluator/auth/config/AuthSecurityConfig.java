@@ -2,6 +2,7 @@ package com.webevaluator.auth.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webevaluator.auth.security.ApiKeyAuthenticationFilter;
+import com.webevaluator.auth.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ import java.util.Map;
 public class AuthSecurityConfig {
 
     private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
 
     @Bean
@@ -64,7 +66,8 @@ public class AuthSecurityConfig {
                             )));
                         })
                 )
-                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
