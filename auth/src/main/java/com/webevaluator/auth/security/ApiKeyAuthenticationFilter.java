@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +30,9 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         String apiKeyHeader = request.getHeader("X-API-Key");
 
         if (apiKeyHeader != null && !apiKeyHeader.trim().isEmpty()) {
-            User user = apiKeyService.validateAndGetUser(apiKeyHeader);
+            // ВАЖНО: trim() убирает случайные пробелы или переносы строк из терминала
+            User user = apiKeyService.validateAndGetUser(apiKeyHeader.trim());
+
             if (user != null) {
                 // УЛУЧШЕНИЕ 1: Кладем реального пользователя в контекст, а не "api-key-user"
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
@@ -39,10 +42,12 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } else {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or revoked API Key");
-                return;
+                // ВАЖНО: выбрасываем исключение, а не делаем sendError.
+                // Это позволит Spring Security корректно отдать 401 с правильным сообщением.
+                throw new BadCredentialsException("Invalid or revoked API Key");
             }
         }
+
         filterChain.doFilter(request, response);
     }
 }

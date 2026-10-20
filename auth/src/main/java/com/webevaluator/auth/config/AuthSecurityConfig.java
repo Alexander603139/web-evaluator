@@ -51,7 +51,7 @@ public class AuthSecurityConfig {
                             response.getWriter().write(objectMapper.writeValueAsString(Map.of(
                                     "status", 401,
                                     "error", "UNAUTHORIZED",
-                                    "message", "Authentication required",
+                                    "message", authException != null ? authException.getMessage() : "Authentication required",
                                     "timestamp", OffsetDateTime.now().toString()
                             )));
                         })
