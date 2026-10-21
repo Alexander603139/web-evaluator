@@ -75,6 +75,7 @@ public class ApiKeyService {
     }
 
     // Улучшение 1: Возвращаем реального User для SecurityContext
+    @Transactional
     public User validateAndGetUser(String plainKey) {
         String hash = hashKey(plainKey);
         return apiKeyRepository.findByKeyHashAndIsActiveTrue(hash)
