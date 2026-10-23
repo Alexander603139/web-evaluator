@@ -298,3 +298,63 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ```
 
 Затем выполнить `GET /api/v1/runs` с токеном USER — в ответе не должно быть задач, созданных админом.
+
+## 🟢 Этап 7: Security-заглушка (Проверки / Definition of Done)
+
+### Локальные проверки
+
+**Сборка и тесты модуля security**
+
+- Команда: `./gradlew :security:test`
+- Ожидаемый результат: `BUILD SUCCESSFUL`, все unit-тесты проходят успешно (зелёные).
+
+**Unit-тесты политики безопасности (`DefaultUrlSecurityPolicyTest`)**
+
+Ожидаемое поведение тестов:
+
+- `http://example.com` → отклонён.
+- `https://example.com` → пропущен.
+- `https://127.0.0.1` → отклонён.
+- `https://10.0.0.1` → отклонён.
+- `https://169.254.169.254` → отклонён (AWS metadata endpoint).
+- `https://192.168.1.1` → отклонён.
+
+**Интеграционная проверка локального API (отклонение HTTP)**
+
+- Действие: Отправить `POST /api/v1/runs` с телом `{"url": "http://example.com", "scenarioType": "MONKEY"}`.
+- Ожидаемый результат: `HTTP статус 400 Bad Request` с JSON-ответом, содержащим сообщение `"Only HTTPS URLs are allowed"`.
+
+### Проверки на VPS
+
+**Интеграционная проверка на VPS (отклонение HTTP)**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/runs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <ВАШ_API_KEY>" \
+  -d '{"url":"http://example.com","scenarioType":"MONKEY"}'
+```
+
+- Ожидаемый результат: `HTTP статус 400` и сообщение `"Only HTTPS URLs are allowed"`.
+
+**Интеграционная проверка на VPS (отклонение приватного/локального IP)**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/runs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <ВАШ_API_KEY>" \
+  -d '{"url":"https://127.0.0.1","scenarioType":"MONKEY"}'
+```
+
+- Ожидаемый результат: `HTTP статус 400` и сообщение `"Access to private or loopback IP addresses is forbidden"`.
+
+**Интеграционная проверка на VPS (успешное прохождение валидации)**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/runs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <ВАШ_API_KEY>" \
+  -d '{"url":"https://example.com","scenarioType":"MONKEY","scenarioConfig":"{\"totalActions\":1}"}'
+```
+
+- Ожидаемый результат: `HTTP статус 200 OK` и JSON-ответ вида `{"jobId":"...","status":"PENDING"}`.
