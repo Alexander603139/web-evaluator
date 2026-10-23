@@ -1,5 +1,6 @@
 package com.webevaluator.api.controller;
 
+import com.webevaluator.core.security.UrlSecurityPolicy;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webevaluator.api.dto.JobResponse;
@@ -28,11 +29,15 @@ public class RunController {
     private final JobService jobService;
     private final ReportService reportService;
     private final ObjectMapper objectMapper;
+    private final UrlSecurityPolicy securityPolicy;
 
     @PostMapping
     public ResponseEntity<RunResponse> createRun(@Valid @RequestBody RunRequest request) {
+        securityPolicy.validate(request.getUrl());
+
         log.info("Received run request: url={}, scenarioType={}", request.getUrl(), request.getScenarioType());
         Job job = jobService.createJob(request.getUrl(), request.getScenarioType(), request.getScenarioConfig());
+
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(new RunResponse(job.getId(), job.getStatus()));
     }

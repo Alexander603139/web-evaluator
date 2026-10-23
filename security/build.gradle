@@ -13,4 +13,8 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter:' + junitJupiterVersion
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation project(':core')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

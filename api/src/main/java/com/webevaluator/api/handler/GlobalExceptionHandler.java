@@ -1,5 +1,6 @@
 package com.webevaluator.api.handler;
 
+import com.webevaluator.core.exception.SecurityPolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,5 +33,15 @@ public class GlobalExceptionHandler {
         error.put("error", ex.getClass().getSimpleName());
         error.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(SecurityPolicyViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleSecurityPolicyViolation(SecurityPolicyViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "status", 400,
+                "error", "BAD_REQUEST",
+                "message", ex.getMessage(),
+                "timestamp", OffsetDateTime.now().toString()
+        ));
     }
 }
