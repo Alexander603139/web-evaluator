@@ -39,21 +39,15 @@
 ## 🚀 Использование через API
 
 **Запуск задачи:**
-
+Предварительно необходимо получить API-ключ.
 ```bash
-curl -X POST http://localhost:8080/api/v1/runs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://example.com",
-    "scenarioType": "MONKEY",
-    "scenarioConfig": "{\"totalActions\": 20, \"maxDurationSeconds\": 30, \"clickWeight\": 70, \"typeWeight\": 20, \"scrollWeight\": 10}"
-  }'
+curl -s -X POST http://localhost:8080/api/v1/runs -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d '{"url":"https://example.com","scenarioType":"MONKEY","scenarioConfig":"{\"totalActions\":20,\"maxDurationSeconds\":30,\"clickWeight\":70,\"typeWeight\":20,\"scrollWeight\":10}"}'
 ```
 
 **Получение отчета:**
 
 ```bash
-curl http://localhost:8080/api/v1/runs/{jobId}
+curl -s http://localhost:8080/api/v1/runs/<ТВОЙ_JOB_ID> -H "X-API-Key: $API_KEY"
 ```
 
 Ответ будет содержать массив `steps`, где каждый шаг имеет поля: `stepNumber`, `action`, `target` (CSS-селектор), `status` (success/failed/skipped), `timestamp`, `errors`.

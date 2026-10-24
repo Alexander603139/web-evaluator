@@ -8,6 +8,7 @@ import com.microsoft.playwright.options.LoadState;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -25,7 +26,8 @@ public class PlaywrightActions implements AutoCloseable {
     public PlaywrightActions() {
         this.playwright = Playwright.create();
         this.browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                .setHeadless(true));
+                .setHeadless(true)
+                .setArgs(Arrays.asList("--no-sandbox", "--disable-setuid-sandbox")));
         this.context = browser.newContext();
         this.page = context.newPage();
 
