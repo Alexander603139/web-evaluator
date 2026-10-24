@@ -44,7 +44,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
                     break;
                 }
 
-                ScenarioStep step = performAction(i, config);
+                MonkeyScenarioStep step = performAction(i, config);
                 steps.add(step);
                 log.info("Step {}: {} on {} - {}",
                         step.getStepNumber(), step.getAction(), step.getTarget(), step.getStatus());
@@ -64,7 +64,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
 
         } catch (Exception e) {
             log.error("Monkey scenario failed", e);
-            steps.add(ScenarioStep.builder()
+            steps.add(MonkeyScenarioStep.builder()
                     .stepNumber(steps.size() + 1)
                     .action("fatal_error")
                     .target("")
@@ -86,7 +86,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
         }
     }
 
-    private ScenarioStep performAction(int stepNumber, MonkeyConfig config) {
+    private MonkeyScenarioStep performAction(int stepNumber, MonkeyConfig config) {
         List<String> errors = new ArrayList<>();
         String action = "";
         String target = "";
@@ -150,7 +150,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
             playwright.clearErrors();
         }
 
-        return ScenarioStep.builder()
+        return MonkeyScenarioStep.builder()
                 .stepNumber(stepNumber)
                 .action(action)
                 .target(target)
