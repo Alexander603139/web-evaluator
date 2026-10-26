@@ -358,3 +358,168 @@ curl -s -X POST http://localhost:8080/api/v1/runs \
 ```
 
 - Ожидаемый результат: `HTTP статус 200 OK` и JSON-ответ вида `{"jobId":"...","status":"PENDING"}`.
+
+## 🟢 Этап 9: Третий сценарий — BDD (Парсер текстовых сценариев)
+
+### Локальные проверки
+
+- **Сборка:** `./gradlew clean build` завершается успешно (`BUILD SUCCESSFUL`).
+- **Подготовка:** Создана локальная тестовая HTML-фикстура с формой входа (поля ввода и кнопка).
+- **Запуск (inline):** Успешный `POST /api/v1/runs` с `scenarioType: "BDD"` и параметром `featureText` в `scenarioConfig`, содержащим 5 шагов (например: открываю страницу, ввожу текст, нажимаю на кнопку, проверяю заголовок).
+
+**Валидация отчёта (успех):** `GET /api/v1/runs/{jobId}` возвращает:
+  - `summary.totalSteps` равен количеству выполненных шагов (например, 5).
+  - Массив `steps` содержит объекты, в каждом из которых присутствует поле `gherkinLine` (исходная строка из `featureText`).
+  - Все шаги имеют `status: "success"`.
+
+**Запуск (ошибка утверждения):** `POST /api/v1/runs` с BDD-сценарием, содержащим заведомо неверное ожидаемое значение (например, `"заголовок страницы равен НеверныйЗаголовок"`).
+
+**Валидация отчёта (ошибка):** `GET /api/v1/runs/{jobId}` возвращает общий `status: "FAILED"`, а последний шаг в массиве `steps` имеет `status: "failed"` и описание расхождения в поле `errors` (или в полях `expected`/`actual`).
+
+**Запуск (из библиотеки):** Успешный `POST /api/v1/runs` с передачей `scenarioId` (вместо `featureText`), сценарий корректно подгружается из таблицы `scenarios` и выполняется.
+
+### Проверки на VPS
+
+- **Деплой:** GitHub Actions завершается успешно, контейнер `web-evaluator-app` имеет статус `Up`.
+- **Интеграционный тест (успех):** `POST /api/v1/runs` с `scenarioType: "BDD"` и валидным `featureText` (направляемый на публичный тестовый сайт, например, `https://the-internet.herokuapp.com/login`) успешно создаёт задачу, а последующий `GET /api/v1/runs/{jobId}` возвращает отчёт с заполненными полями `gherkinLine` и статусом `SUCCESS`.
+- **Интеграционный тест (ошибка):** Повторение локальной проверки с неверным ожидаемым заголовком на VPS возвращает корректный JSON с `status: "FAILED"` и детализацией ошибки в последнем шаге.
+
+> **Примечание:** Для проверок на VPS используется заголовок авторизации `-H "X-API-Key: $API_KEY"` или `-H "Authorization: Bearer $TOKEN"`.
+
+## Примеры запросов и ответов API
+
+### 1. Запуск сценария inline (успешное выполнение)
+
+**Запрос:**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/runs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY" \
+  -d '{"url":"https://the-internet.herokuapp.com/login","scenarioType":"BDD","scenarioConfig":"{\"featureText\":\"открываю страницу https://the-internet.herokuapp.com/login\\nввожу текст admin в поле #username\\nнажимаю на кнопку button[type=\\\"submit\\\"]\\nзаголовок страницы равен Dashboard\"}"}'
+```
+
+**Ожидаемый ответ (после деплоя полиморфного рефакторинга):**
+
+```json
+{
+  "jobId": "uuid-успешного-запуска",
+  "scenarioType": "BDD",
+  "status": "SUCCESS",
+  "targetUrl": "https://the-internet.herokuapp.com/login",
+  "report": {
+    "summary": {
+      "totalSteps": 4,
+      "errorCount": 0,
+      "goalAchieved": true
+    },
+    "steps": [
+      {
+        "stepType": "BDD",
+        "stepNumber": 1,
+        "gherkinLine": "открываю страницу https://the-internet.herokuapp.com/login",
+        "status": "success",
+        "timestamp": "2026-10-26T12:00:00.000Z",
+        "errors": []
+      }
+//      остальные шаги
+    ]
+  }
+}
+```
+
+### 2. Запуск сценария с ошибкой утверждения или таймаутом (Фактический пример из лога)
+
+**Запрос:**
+
+```bash
+curl -s http://localhost:8080/api/v1/runs/bebef443-7b3d-452f-b865-aebdd66f961f -H "X-API-Key: $API_KEY"
+```
+
+**Фактический ответ (демонстрирует корректный перехват ошибок Playwright):**
+
+```json
+{
+  "jobId": "bebef443-7b3d-452f-b865-aebdd66f961f",
+  "scenarioType": "BDD",
+  "status": "FAILED",
+  "targetUrl": "https://example.com",
+  "createdAt": "2026-10-26T12:07:13.879259Z",
+  "startedAt": "2026-10-26T12:07:13.900688Z",
+  "finishedAt": "2026-10-26T12:08:14.161204Z",
+  "error": null,
+  "report": {
+    "summary": {
+      "totalSteps": 4,
+      "errorCount": 2,
+      "goalAchieved": false
+    },
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": null,
+        "target": null,
+        "status": "success",
+        "timestamp": "2026-10-26T12:07:14.062102793Z",
+        "errors": []
+      },
+      {
+        "stepNumber": 2,
+        "action": null,
+        "target": null,
+        "status": "failed",
+        "timestamp": "2026-10-26T12:07:44.069885716Z",
+        "errors": [
+          "Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (/tmp/playwright-java-1673893132382695992/package/lib/server/progress.js:75:26)\n    at Frame.fill (/tmp/playwright-java-1673893132382695992/package/lib/server/frames.js:1072:23)\n...\nCall log:\n-   - waiting for locator(\"input\")\n"
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "action": null,
+        "target": null,
+        "status": "failed",
+        "timestamp": "2026-10-26T12:08:14.073529122Z",
+        "errors": [
+          "Error {\n  message='Timeout 30000ms exceeded.\n...\nCall log:\n-   - waiting for locator(\"button\")\n"
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "action": null,
+        "target": null,
+        "status": "success",
+        "timestamp": "2026-10-26T12:08:14.076400235Z",
+        "errors": []
+      }
+    ]
+  }
+}
+```
+
+> (Примечание: в этом логе отсутствуют поля `stepType` и `gherkinLine`, так как он был получен до применения финального полиморфного рефакторинга `ScenarioStep`. После деплоя исправлений эти поля появятся, но структура перехвата `errors` останется именно такой).
+
+### 3. Запуск сценария из библиотеки (по `scenarioId`)
+
+**Запрос:**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/runs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY" \
+  -d '{"url":"https://example.com","scenarioType":"BDD","scenarioConfig":"{\"scenarioId\":\"123e4567-e89b-12d3-a456-426614174000\"}"}'
+```
+
+**Ожидаемый ответ:** `{"jobId":"...","status":"PENDING"}` (Движок самостоятельно загрузит `content` из таблицы `scenarios` по указанному ID).
+
+### Локальные проверки
+
+- **Сборка:** `./gradlew clean build` завершается успешно (`BUILD SUCCESSFUL`).
+- **Подготовка:** Создана локальная тестовая HTML-фикстура с формой входа.
+- **Валидация отчёта (успех):** `GET /api/v1/runs/{jobId}` возвращает `status: "SUCCESS"`, массив `steps` содержит объекты с обязательным полем `"stepType": "BDD"` и `"gherkinLine"`.
+- **Валидация отчёта (ошибка):** При неверном ожидаемом заголовке или таймауте (как в примере 2), общий статус `"FAILED"`, а в массиве `steps` конкретный шаг имеет `"status": "failed"` и детальное описание в массиве `"errors"`.
+- **Запуск из библиотеки:** Успешный запуск по `scenarioId` без передачи `featureText`.
+
+### Проверки на VPS
+
+- **Деплой:** GitHub Actions завершается успешно, контейнер `web-evaluator-app` имеет статус `Up`.
+- **Интеграционный тест:** Повторение локальных проверок (успех, ошибка, библиотека) через `curl` на VPS с использованием `$API_KEY` возвращает корректные JSON-структуры, идентичные примерам выше.
