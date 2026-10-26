@@ -110,6 +110,10 @@ public class PlaywrightActions implements AutoCloseable {
         return page.screenshot(new Page.ScreenshotOptions().setPath(path));
     }
 
+    public String getTitle() {
+        return page.title();
+    }
+
     public List<String> findInteractiveElements() {
         List<String> selectors = new ArrayList<>();
 

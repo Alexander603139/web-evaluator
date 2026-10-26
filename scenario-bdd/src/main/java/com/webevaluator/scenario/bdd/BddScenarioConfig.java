@@ -1,9 +1,9 @@
 package com.webevaluator.scenario.bdd;
+import lombok.Data;
+import java.util.UUID;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-@ComponentScan(basePackages = "com.webevaluator.scenario.bdd")
+@Data
 public class BddScenarioConfig {
+    private UUID scenarioId;
+    private String featureText;
 }
