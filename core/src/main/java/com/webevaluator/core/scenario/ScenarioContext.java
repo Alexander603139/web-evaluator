@@ -1,5 +1,6 @@
 package com.webevaluator.core.scenario;
 
+import com.webevaluator.credentials.Credential;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,4 +12,5 @@ public class ScenarioContext {
     private UUID jobId;
     private String targetUrl;
     private String scenarioConfig; // JSON с параметрами
+    private Credential credential;
 }

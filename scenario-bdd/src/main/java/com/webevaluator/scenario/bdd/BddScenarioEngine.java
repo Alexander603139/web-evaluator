@@ -1,14 +1,18 @@
 package com.webevaluator.scenario.bdd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webevaluator.credentials.Credential;
+import com.webevaluator.credentials.CredentialType;
 import com.webevaluator.core.repository.ScenarioRepository;
 import com.webevaluator.core.scenario.ScenarioContext;
 import com.webevaluator.core.scenario.ScenarioEngine;
 import com.webevaluator.core.scenario.ScenarioResult;
+import com.webevaluator.uiactions.CredentialApplier;
 import lombok.RequiredArgsConstructor;
 import com.webevaluator.uiactions.PlaywrightActions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +27,14 @@ public class BddScenarioEngine implements ScenarioEngine {
     private final PlaywrightActions playwright;
     private final ObjectMapper objectMapper;
     private final ScenarioRepository scenarioRepository;
+    private final CredentialApplier credentialApplier;
 
     @Override
     public ScenarioResult execute(ScenarioContext context) {
         BddScenarioConfig config = parseConfig(context.getScenarioConfig());
         String featureText = resolveFeatureText(config);
+
+        credentialApplier.applyHeaders(context.getCredential());
 
         List<BddScenarioStep> steps = new ArrayList<>();
         String[] lines = featureText.split("\\r?\\n");
@@ -38,7 +45,7 @@ public class BddScenarioEngine implements ScenarioEngine {
                 String trimmed = line.trim();
                 if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
 
-                BddScenarioStep step = executeStep(stepNumber++, trimmed);
+                BddScenarioStep step = executeStep(stepNumber++, trimmed, context.getCredential());
                 steps.add(step);
                 log.info("Step {}: {} - {}", step.getStepNumber(), step.getGherkinLine(), step.getStatus());
             }
@@ -73,7 +80,7 @@ public class BddScenarioEngine implements ScenarioEngine {
         }
     }
 
-    private BddScenarioStep executeStep(int stepNumber, String line) {
+    private BddScenarioStep executeStep(int stepNumber, String line, Credential credential) {
         String status = "success";
         List<String> errors = new ArrayList<>();
         String expected = null;
@@ -84,6 +91,8 @@ public class BddScenarioEngine implements ScenarioEngine {
             Matcher mOpen = Pattern.compile("^открываю страницу(?:\\s+(.+))?$", Pattern.CASE_INSENSITIVE).matcher(line);
             if (mOpen.matches()) {
                 playwright.navigate(mOpen.group(1) != null ? mOpen.group(1) : "about:blank");
+                playwright.waitForLoadState("networkidle"); // Ждём полную загрузку
+                credentialApplier.applyForm(credential); // Заполняем форму, если тип FORM_LOGIN
                 return buildStep(stepNumber, line, status, errors, expected, actual);
             }
 

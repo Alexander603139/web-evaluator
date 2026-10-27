@@ -1,10 +1,12 @@
 package com.webevaluator.scenario.monkey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webevaluator.credentials.CredentialType;
 import com.webevaluator.core.scenario.ScenarioContext;
 import com.webevaluator.core.scenario.ScenarioEngine;
 import com.webevaluator.core.scenario.ScenarioResult;
 import com.webevaluator.core.scenario.ScenarioStep;
+import com.webevaluator.uiactions.CredentialApplier;
 import com.webevaluator.uiactions.PlaywrightActions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
     private final PlaywrightActions playwright;
     private final ObjectMapper objectMapper;
     private final Random random = new Random();
+    private final CredentialApplier credentialApplier;
 
     @Override
     public ScenarioResult execute(ScenarioContext context) {
@@ -33,9 +36,14 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
         long maxDurationMillis = config.getMaxDurationSeconds() * 1000L;
 
         try {
+            credentialApplier.applyHeaders(context.getCredential());
             playwright.navigate(context.getTargetUrl());
             playwright.waitForLoadState("networkidle");
             log.info("Opened page: {}", context.getTargetUrl());
+
+            if (context.getCredential() != null && context.getCredential().getType() == CredentialType.FORM_LOGIN) {
+                credentialApplier.applyForm(context.getCredential());
+            }
 
             for (int i = 1; i <= config.getTotalActions(); i++) {
                 // Проверяем лимит времени

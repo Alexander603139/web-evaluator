@@ -3,6 +3,7 @@ package com.webevaluator.api.dto;
 import com.webevaluator.core.domain.ScenarioType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import com.webevaluator.credentials.Credential;
 import lombok.Data;
 
 @Data
@@ -14,4 +15,5 @@ public class RunRequest {
     private ScenarioType scenarioType;
 
     private String scenarioConfig;
+    private Credential credential;
 }

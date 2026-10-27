@@ -208,6 +208,12 @@ public class PlaywrightActions implements AutoCloseable {
         page.waitForLoadState(LoadState.valueOf(state.toUpperCase()));
     }
 
+    public void setExtraHeader(String name, String value) {
+        if (context != null) {
+            context.setExtraHTTPHeaders(java.util.Map.of(name, value));
+        }
+    }
+
     @Override
     public void close() {
         try {
