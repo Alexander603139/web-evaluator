@@ -43,6 +43,7 @@ public class JobWorker {
                     .jobId(job.getId())
                     .targetUrl(job.getTargetUrl())
                     .scenarioConfig(job.getRequestParams())
+                    .credential(job.getCredential())
                     .build();
 
             ScenarioResult result = engine.execute(context);
