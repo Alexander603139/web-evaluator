@@ -523,3 +523,22 @@ curl -s -X POST http://localhost:8080/api/v1/runs \
 
 - **Деплой:** GitHub Actions завершается успешно, контейнер `web-evaluator-app` имеет статус `Up`.
 - **Интеграционный тест:** Повторение локальных проверок (успех, ошибка, библиотека) через `curl` на VPS с использованием `$API_KEY` возвращает корректные JSON-структуры, идентичные примерам выше.
+
+### Этап 10: Ephemeral Credentials (Эфемерные учетные данные)
+
+#### Локальные проверки
+- [ ] **Сборка:** `./gradlew clean build` завершается успешно (`BUILD SUCCESSFUL`).
+- [ ] **Запуск с FORM_LOGIN (эвристика):** Успешный `POST /api/v1/runs` с блоком `credential` в теле запроса.
+  - *Пример:* `{"url":"https://the-internet.herokuapp.com/login", "scenarioType":"MONKEY", "scenarioConfig":"{\"totalActions\":1}", "credential":{"type":"FORM_LOGIN","username":"tomsmith","password":"SuperSecretPassword!"}}`
+- [ ] **Валидация логов (FORM_LOGIN):** В логах приложения (`docker compose logs app`) присутствуют строки:
+  - `Filled password field`
+  - `Filled username field`
+- [ ] **Запуск с BASIC_AUTH / BEARER_TOKEN:** Успешный `POST /api/v1/runs` с соответствующим типом `credential`.
+- [ ] **Валидация логов (Headers):** В логах присутствует строка `Set extra header: Authorization`.
+- [ ] **Проверка БД (эфемерность):** В таблице `jobs` колонка `credential_data` (тип `jsonb`) содержит переданные данные только на время выполнения задачи. Отдельная таблица для постоянного хранения учетных данных **не создается** и не используется в этом потоке.
+- [ ] **Безопасность:** Пароли и токены не выводятся в логи в открытом виде и не сохраняются в отчетах (`Report`).
+
+#### Проверки на VPS
+- [ ] **Деплой:** GitHub Actions завершается успешно, контейнер `web-evaluator-app` имеет статус `Up`.
+- [ ] **Интеграционный тест (FORM_LOGIN):** `curl` запрос с `credential` на VPS успешно авторизует браузер перед выполнением сценария (подтверждается логами `Filled password field` / `Filled username field`).
+- [ ] **Интеграционный тест (Headers):** `curl` запрос с `BEARER_TOKEN` или `BASIC_AUTH` успешно добавляет заголовки перед навигацией.
