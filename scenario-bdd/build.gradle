@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api project(':core')
     implementation project(':ui-actions')
+    implementation project(':credentials')
 
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

@@ -10,6 +10,7 @@ dependencies {
     api project(':scenario-bdd')
     api project(':scenario-exploratory')
     api project(':scenario-ai')
+    implementation project(':credentials')
     api 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     compileOnly 'org.projectlombok:lombok'

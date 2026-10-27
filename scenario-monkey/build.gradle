@@ -6,6 +6,7 @@ plugins {
 dependencies {
     api project(':core')
     api project(':ui-actions')
+    implementation project(':credentials')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'com.fasterxml.jackson.core:jackson-databind'

@@ -32,6 +32,7 @@ class MonkeyScenarioEngineTest {
                 .jobId(UUID.randomUUID())
                 .targetUrl("https://example.com")
                 .scenarioConfig("{\"totalActions\": 3, \"maxDurationSeconds\": 60}")
+
                 .build();
 
         when(playwright.findInteractiveElements())
