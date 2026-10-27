@@ -6,6 +6,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import com.webevaluator.credentials.Credential;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "jobs")
@@ -37,8 +40,12 @@ public class Job {
     @Column(name = "request_params", nullable = false, columnDefinition = "jsonb")
     private String requestParams;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "credential_id")
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "credential_id")
+//    private Credential credential;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "credential_data", columnDefinition = "jsonb")
     private Credential credential;
 
     @ManyToOne(fetch = FetchType.LAZY)

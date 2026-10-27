@@ -9,6 +9,7 @@ import com.webevaluator.api.dto.RunResponse;
 import com.webevaluator.core.domain.Job;
 import com.webevaluator.orchestrator.service.JobService;
 import com.webevaluator.reporting.service.ReportService;
+import com.webevaluator.credentials.Credential;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,11 @@ public class RunController {
         securityPolicy.validate(request.getUrl());
 
         log.info("Received run request: url={}, scenarioType={}", request.getUrl(), request.getScenarioType());
-        Job job = jobService.createJob(request.getUrl(), request.getScenarioType(), request.getScenarioConfig());
+        Job job = jobService.createJob(
+                request.getUrl(),
+                request.getScenarioType(),
+                request.getScenarioConfig(),
+                request.getCredential());
 
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(new RunResponse(job.getId(), job.getStatus()));

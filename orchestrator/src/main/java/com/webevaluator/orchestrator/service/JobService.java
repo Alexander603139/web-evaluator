@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.webevaluator.credentials.Credential;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,12 +21,13 @@ public class JobService {
     private final JobRepository jobRepository;
 
     @Transactional
-    public Job createJob(String url, ScenarioType scenarioType, String scenarioConfig) {
+    public Job createJob(String url, ScenarioType scenarioType, String scenarioConfig, Credential credential) {
         Job job = Job.builder()
                 .targetUrl(url)
                 .scenarioType(scenarioType)
                 .status(JobStatus.PENDING)
                 .requestParams(scenarioConfig != null ? scenarioConfig : "{}")
+                .credential(credential)
                 .build();
 
         Job saved = jobRepository.save(job);
