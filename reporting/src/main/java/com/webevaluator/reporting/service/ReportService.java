@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -21,21 +22,19 @@ public class ReportService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public Report saveReport(Job job, Object summary, Object steps) {
+    public Report saveReport(Job job, Object summary, Object steps, Map<String, Object> artifacts) {
         try {
             String summaryJson = objectMapper.writeValueAsString(summary);
             String stepsJson = objectMapper.writeValueAsString(steps);
+            String artifactsJson = objectMapper.writeValueAsString(artifacts != null ? artifacts : Map.of());
 
             Report report = reportRepository.findById(job.getId()).orElse(new Report());
             report.setJob(job);
             report.setSummary(summaryJson);
             report.setSteps(stepsJson);
-            report.setArtifacts("{}");
-
+            report.setArtifacts(artifactsJson);
             return reportRepository.save(report);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize report", e);
-        }
+        } catch (JsonProcessingException e) { throw new RuntimeException(e); }
     }
 
     @Transactional(readOnly = true)

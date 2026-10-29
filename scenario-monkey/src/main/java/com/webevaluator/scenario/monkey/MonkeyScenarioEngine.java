@@ -8,6 +8,8 @@ import com.webevaluator.core.scenario.ScenarioResult;
 import com.webevaluator.core.scenario.ScenarioStep;
 import com.webevaluator.uiactions.CredentialApplier;
 import com.webevaluator.uiactions.PlaywrightActions;
+import com.webevaluator.core.storage.ArtifactUploader;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,7 +54,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
                     break;
                 }
 
-                MonkeyScenarioStep step = performAction(i, config);
+                MonkeyScenarioStep step = performAction(i, config, context.getJobId(), context.getArtifactUploader());
                 steps.add(step);
                 log.info("Step {}: {} on {} - {}",
                         step.getStepNumber(), step.getAction(), step.getTarget(), step.getStatus());
@@ -94,7 +96,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
         }
     }
 
-    private MonkeyScenarioStep performAction(int stepNumber, MonkeyConfig config) {
+    private MonkeyScenarioStep performAction(int stepNumber, MonkeyConfig config, UUID jobId, ArtifactUploader uploader) {
         List<String> errors = new ArrayList<>();
         String action = "";
         String target = "";
@@ -158,6 +160,17 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
             playwright.clearErrors();
         }
 
+        String screenshotUrl = null;
+        if ("failed".equals(status) && uploader != null) {
+            try {
+                byte[] screenshot = playwright.takeScreenshot();
+                String filename = "step_" + stepNumber + "_screenshot.png";
+                screenshotUrl = uploader.uploadArtifact(jobId.toString(), filename, screenshot);
+            } catch (Exception e) {
+                log.warn("Screenshot upload failed for step {}: {}", stepNumber, e.getMessage());
+            }
+        }
+
         return MonkeyScenarioStep.builder()
                 .stepNumber(stepNumber)
                 .action(action)
@@ -165,6 +178,7 @@ public class MonkeyScenarioEngine implements ScenarioEngine {
                 .status(status)
                 .timestamp(OffsetDateTime.now())
                 .errors(errors)
+                .screenshotUrl(screenshotUrl)
                 .build();
     }
 

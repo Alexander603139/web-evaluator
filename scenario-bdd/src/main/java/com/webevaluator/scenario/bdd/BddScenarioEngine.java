@@ -8,6 +8,7 @@ import com.webevaluator.core.scenario.ScenarioContext;
 import com.webevaluator.core.scenario.ScenarioEngine;
 import com.webevaluator.core.scenario.ScenarioResult;
 import com.webevaluator.uiactions.CredentialApplier;
+import com.webevaluator.core.storage.ArtifactUploader;
 import lombok.RequiredArgsConstructor;
 import com.webevaluator.uiactions.PlaywrightActions;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,23 @@ public class BddScenarioEngine implements ScenarioEngine {
                 if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
 
                 BddScenarioStep step = executeStep(stepNumber++, trimmed, context.getCredential());
+
+                // Скриншот при ошибке шага
+                String screenshotUrl = null;
+                if ("failed".equals(step.getStatus()) && context.getArtifactUploader() != null) {
+                    try {
+                        byte[] screenshot = playwright.takeScreenshot();
+                        String filename = "step_" + step.getStepNumber() + "_screenshot.png";
+                        screenshotUrl = context.getArtifactUploader().uploadArtifact(
+                                context.getJobId().toString(), filename, screenshot);
+                    } catch (Exception e) {
+                        log.warn("Screenshot upload failed for step {}: {}", step.getStepNumber(), e.getMessage());
+                    }
+                }
+                if (screenshotUrl != null) {
+                    step = step.toBuilder().screenshotUrl(screenshotUrl).build();
+                }
+
                 steps.add(step);
                 log.info("Step {}: {} - {}", step.getStepNumber(), step.getGherkinLine(), step.getStatus());
             }
@@ -76,7 +94,10 @@ public class BddScenarioEngine implements ScenarioEngine {
                     .steps((List) steps)
                     .build();
         } finally {
-            try { playwright.close(); } catch (Exception ignored) {}
+            try {
+                playwright.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 

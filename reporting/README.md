@@ -23,7 +23,8 @@
 
 ### 2.1. ReportService
 
-Основной сервис модуля. Отвечает за преобразование Java-объектов в JSON и сохранение.
+[//]: # (Основной сервис модуля. Отвечает за преобразование Java-объектов в JSON и сохранение.)
+Реализует `ArtifactUploader`. Метод `uploadArtifact` загружает `byte[]` в S3 по пути `{jobId}/{filename}` и возвращает presigned URL (1 час). `generateHtmlReport` парсит JSON шагов, строит HTML-таблицу с `<img>`/ссылками, загружает её как `report.html` и возвращает её presigned URL.
 
 **Ключевой метод:**
 
@@ -52,11 +53,19 @@ public Report saveReport(Job job, Object summary, Object steps)
 
 ## 3. Поток данных (Data Flow)
 
-1. **Генерация:** `MonkeyScenarioEngine` завершает работу и возвращает объект `ScenarioResult`, содержащий `totalSteps`, `errorCount`, `goalAchieved` и `List<ScenarioStep>`.
-2. **Передача:** `JobWorker` вызывает `reportService.saveReport(job, result, result.getSteps())`.
-3. **Сериализация:** `ReportService` превращает объекты в JSON-строки с помощью Jackson.
-4. **Сохранение:** `ReportRepository` сохраняет запись в таблицу `reports`.
-5. **Чтение:** При запросе `GET /api/v1/runs/{jobId}`, контроллер извлекает `Job` и связанный `Report`, десериализует JSON-строки обратно в DTO (`JobResponse.ReportData`, `Summary`, `Step`) и отдает клиенту.
+[//]: # (1. **Генерация:** `MonkeyScenarioEngine` завершает работу и возвращает объект `ScenarioResult`, содержащий `totalSteps`, `errorCount`, `goalAchieved` и `List<ScenarioStep>`.)
+
+[//]: # (2. **Передача:** `JobWorker` вызывает `reportService.saveReport&#40;job, result, result.getSteps&#40;&#41;&#41;`.)
+
+[//]: # (3. **Сериализация:** `ReportService` превращает объекты в JSON-строки с помощью Jackson.)
+
+[//]: # (4. **Сохранение:** `ReportRepository` сохраняет запись в таблицу `reports`.)
+
+[//]: # (5. **Чтение:** При запросе `GET /api/v1/runs/{jobId}`, контроллер извлекает `Job` и связанный `Report`, десериализует JSON-строки обратно в DTO &#40;`JobResponse.ReportData`, `Summary`, `Step`&#41; и отдает клиенту.)
+
+При ошибке шага: `PlaywrightActions.takeScreenshot()` → `ArtifactUploader.uploadArtifact()` → URL сохраняется в `ScenarioStep.screenshotUrl`.
+По завершении: `JobWorker` собирает все `screenshotUrl` в `artifacts.screenshots`, вызывает `generateHtmlReport()` → `artifacts.htmlReport` → `ReportService.saveReport(..., artifacts)`.
+API отдаёт presigned URL напрямую из S3 без проксирования трафика через Java.
 
 ## 4. API Контракт (Формат ответа)
 

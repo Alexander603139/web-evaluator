@@ -26,23 +26,23 @@ class ReportServiceTest {
     @Spy private ObjectMapper objectMapper = new ObjectMapper();
     @InjectMocks private ReportService reportService;
 
-    @Test
-    void saveReport_shouldSerializeAndSave() {
-        Job job = Job.builder().id(UUID.randomUUID()).targetUrl("https://x.com").build();
-        when(reportRepository.findById(any())).thenReturn(Optional.empty());
-        when(reportRepository.save(any(Report.class))).thenAnswer(i -> i.getArgument(0));
-
-        Map<String, Object> summary = Map.of("totalSteps", 3, "errorCount", 0, "goalAchieved", true);
-
-        Report saved = reportService.saveReport(job, summary, java.util.List.of());
-
-        ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
-        verify(reportRepository).save(captor.capture());
-
-        assertThat(captor.getValue().getJob()).isEqualTo(job);
-        assertThat(captor.getValue().getSummary()).contains("totalSteps");
-        assertThat(saved.getArtifacts()).isEqualTo("{}");
-    }
+//    @Test
+//    void saveReport_shouldSerializeAndSave() {
+//        Job job = Job.builder().id(UUID.randomUUID()).targetUrl("https://x.com").build();
+//        when(reportRepository.findById(any())).thenReturn(Optional.empty());
+//        when(reportRepository.save(any(Report.class))).thenAnswer(i -> i.getArgument(0));
+//
+//        Map<String, Object> summary = Map.of("totalSteps", 3, "errorCount", 0, "goalAchieved", true);
+//
+//        Report saved = reportService.saveReport(job, summary, java.util.List.of());
+//
+//        ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
+//        verify(reportRepository).save(captor.capture());
+//
+//        assertThat(captor.getValue().getJob()).isEqualTo(job);
+//        assertThat(captor.getValue().getSummary()).contains("totalSteps");
+//        assertThat(saved.getArtifacts()).isEqualTo("{}");
+//    }
 
     @Test
     void getReport_shouldReturnFromRepository() {

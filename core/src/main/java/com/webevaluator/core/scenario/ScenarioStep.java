@@ -18,4 +18,5 @@ public abstract class ScenarioStep {
     private String status; // success, failed, skipped
     private OffsetDateTime timestamp;
     private List<String> errors;
+    private String screenshotUrl;
 }

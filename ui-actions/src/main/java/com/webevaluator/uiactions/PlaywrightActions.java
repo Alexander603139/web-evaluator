@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.Page;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -102,12 +103,16 @@ public class PlaywrightActions implements AutoCloseable {
         page.waitForTimeout(100);
     }
 
-    public byte[] takeScreenshot() {
-        return page.screenshot();
-    }
+//    public byte[] takeScreenshot() {
+//        return page.screenshot();
+//    }
 
     public byte[] takeScreenshot(Path path) {
         return page.screenshot(new Page.ScreenshotOptions().setPath(path));
+    }
+
+    public byte[] takeScreenshot() {
+        return page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
     }
 
     public String getTitle() {

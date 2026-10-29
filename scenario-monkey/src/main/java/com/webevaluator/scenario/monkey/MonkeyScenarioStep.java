@@ -15,5 +15,6 @@ import lombok.experimental.SuperBuilder;
 public class MonkeyScenarioStep extends ScenarioStep {
     private String action;
     private String target;
+    private String screenshotUrl;
 
 }

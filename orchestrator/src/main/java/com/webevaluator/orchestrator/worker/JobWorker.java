@@ -5,16 +5,19 @@ import com.webevaluator.core.domain.JobStatus;
 import com.webevaluator.core.scenario.ScenarioContext;
 import com.webevaluator.core.scenario.ScenarioEngine;
 import com.webevaluator.core.scenario.ScenarioResult;
+import com.webevaluator.core.storage.ArtifactUploader;
 import com.webevaluator.orchestrator.repository.JobRepository;
 import com.webevaluator.orchestrator.scenario.ScenarioRegistry;
+import com.webevaluator.reporting.service.ArtifactStorageService;
 import com.webevaluator.reporting.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -24,6 +27,9 @@ public class JobWorker {
     private final JobRepository jobRepository;
     private final ReportService reportService;
     private final ScenarioRegistry scenarioRegistry;
+    private final ArtifactUploader artifactUploader;
+    private final ArtifactStorageService artifactStorageService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public void processNextJob() {
@@ -44,11 +50,22 @@ public class JobWorker {
                     .targetUrl(job.getTargetUrl())
                     .scenarioConfig(job.getRequestParams())
                     .credential(job.getCredential())
+                    .artifactUploader(artifactUploader)
                     .build();
 
             ScenarioResult result = engine.execute(context);
+            Map<String, Object> artifacts = new HashMap<>();
+            List<String> screenshots = new ArrayList<>();
+            for (var step : result.getSteps()) {
+                if (step.getScreenshotUrl() != null) screenshots.add(step.getScreenshotUrl());
+            }
+            artifacts.put("screenshots", screenshots);
+            String summaryJson = objectMapper.writeValueAsString(result); // или используй свой маппинг
+            String stepsJson = objectMapper.writeValueAsString(result.getSteps());
+            String htmlUrl = artifactStorageService.generateHtmlReport(job, summaryJson, stepsJson);
+            artifacts.put("htmlReport", htmlUrl);
 
-            reportService.saveReport(job, result, result.getSteps());
+            reportService.saveReport(job, result, result.getSteps(), artifacts);
 
             job.setStatus(result.isGoalAchieved() ? JobStatus.SUCCESS : JobStatus.FAILED);
             job.setFinishedAt(OffsetDateTime.now());

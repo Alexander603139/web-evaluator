@@ -542,3 +542,11 @@ curl -s -X POST http://localhost:8080/api/v1/runs \
 - [ ] **Деплой:** GitHub Actions завершается успешно, контейнер `web-evaluator-app` имеет статус `Up`.
 - [ ] **Интеграционный тест (FORM_LOGIN):** `curl` запрос с `credential` на VPS успешно авторизует браузер перед выполнением сценария (подтверждается логами `Filled password field` / `Filled username field`).
 - [ ] **Интеграционный тест (Headers):** `curl` запрос с `BEARER_TOKEN` или `BASIC_AUTH` успешно добавляет заголовки перед навигацией.
+
+### Этап 13: Расширенный reporting
+- [ ] `./gradlew build` — BUILD SUCCESSFUL
+- [ ] В `application.yml` прописаны `S3_*` переменные окружения
+- [ ] `POST /api/v1/runs` с Monkey/BDD на страницу с ошибкой → задача завершается, в БД в поле `artifacts` появляется JSON с массивом `screenshots` и `htmlReport`
+- [ ] `GET /api/v1/runs/{jobId}/artifacts/step_1_screenshot.png` → возвращает валидный presigned URL (скачивается PNG)
+- [ ] `GET /api/v1/runs/{jobId}/report.html` → браузер открывает таблицу шагов, кликабельные ссылки на скриншоты работают
+- [ ] На VPS те же проверки через `curl` → файлы скачиваются, S3-бакет пополняется папкой `{jobId}/`
