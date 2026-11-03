@@ -9,7 +9,7 @@ dependencies {
     implementation project(':api')
     implementation project(':auth')
     implementation project(':orchestrator')
-    implementation project(':scenario-bdd')
+//    implementation project(':scenario-bdd')
     implementation project(':scenario-exploratory')
     implementation project(':scenario-monkey')
     implementation project(':scenario-ai')

@@ -1,7 +1,7 @@
 package com.webevaluator.app.config;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.webevaluator.scenario.bdd.BddScenarioStep;
+//import com.webevaluator.scenario.bdd.BddScenarioStep;
 import com.webevaluator.scenario.exploratory.ExploratoryScenarioStep;
 import com.webevaluator.scenario.monkey.MonkeyScenarioStep;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
@@ -17,8 +17,8 @@ public class JacksonConfig {
             SimpleModule module = new SimpleModule();
             module.registerSubtypes(
                     MonkeyScenarioStep.class,
-                    ExploratoryScenarioStep.class,
-                    BddScenarioStep.class);
+                    ExploratoryScenarioStep.class);
+//                    BddScenarioStep.class);
             builder.modulesToInstall(module);
         };
     }
