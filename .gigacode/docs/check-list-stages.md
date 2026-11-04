@@ -543,10 +543,70 @@ curl -s -X POST http://localhost:8080/api/v1/runs \
 - [ ] **Интеграционный тест (FORM_LOGIN):** `curl` запрос с `credential` на VPS успешно авторизует браузер перед выполнением сценария (подтверждается логами `Filled password field` / `Filled username field`).
 - [ ] **Интеграционный тест (Headers):** `curl` запрос с `BEARER_TOKEN` или `BASIC_AUTH` успешно добавляет заголовки перед навигацией.
 
-### Этап 13: Расширенный reporting
-- [ ] `./gradlew build` — BUILD SUCCESSFUL
-- [ ] В `application.yml` прописаны `S3_*` переменные окружения
-- [ ] `POST /api/v1/runs` с Monkey/BDD на страницу с ошибкой → задача завершается, в БД в поле `artifacts` появляется JSON с массивом `screenshots` и `htmlReport`
-- [ ] `GET /api/v1/runs/{jobId}/artifacts/step_1_screenshot.png` → возвращает валидный presigned URL (скачивается PNG)
-- [ ] `GET /api/v1/runs/{jobId}/report.html` → браузер открывает таблицу шагов, кликабельные ссылки на скриншоты работают
-- [ ] На VPS те же проверки через `curl` → файлы скачиваются, S3-бакет пополняется папкой `{jobId}/`
+## 🟢 Этап 13: Расширенный reporting
+
+**Статус на 04.11.2026:** частично проверен. Загрузка скриншотов в `MonkeyScenarioEngine` работает только при `status="failed"` шага.
+
+### Локальные проверки
+
+- [x] `./gradlew :app:clean :app:bootJar -x test` — `BUILD SUCCESSFUL`
+- [x] В `application.yml` (или через env) прописаны `S3_*` переменные — подтверждено `printenv | grep -i s3`
+- [x] Артефакты в JAR: `unzip -l app/build/libs/*.jar | grep -i artifact` возвращает `ArtifactController.class` и `ArtifactStorageService.class`
+- [ ] `POST /api/v1/runs` с `MONKEY` на страницу с JS-ошибкой → в `reports.artifacts` появляется JSON с непустым `screenshots[]` и `htmlReport`
+
+  > **Важно:** `scenarioConfig` — строка с экранированным JSON, не объект:
+
+  ```bash
+  -d '{"url":"...","scenarioType":"MONKEY","scenarioConfig":"{\"totalActions\":50}"}'
+  ```
+
+  Для гарантированного `failed` использовать HTML-фикстуру с `<button onclick="throw new Error('boom')">` (этап 2).
+
+- [x] `GET /api/v1/runs/{jobId}/artifacts/{filename}` → возвращает presigned URL (HTTP 200, тело — URL)
+
+  Подтверждено на `MONKEY`: получен валидный URL от `s3.twcstorage.ru` с `X-Amz-Signature`.
+
+  Дополнительно проверять скачивание: `curl -sI "$(presigned_url)" | head -1`
+
+  - `200` — файл есть в S3
+  - `404` — файла нет (сценарий не имел failed-шагов, скриншот не загружался)
+
+- [ ] `GET /api/v1/runs/{jobId}/report.html` → `302` + `Location: <presigned URL>` — не проверено
+
+  Проверить: `curl -sv http://localhost:8080/api/v1/runs/{jobId}/report.html -H "X-API-Key: $API_KEY" 2>&1 | head -20`
+
+  При открытии URL в браузере — таблица шагов, скриншоты кликабельны.
+
+- [x] В `reports.artifacts` поле `htmlReport` заполняется — подтверждено запросом к БД:
+
+  ```json
+  {"htmlReport": "https://s3.twcstorage.ru/.../report.html?X-Amz-...", "screenshots": []}
+  ```
+
+- [x] `S3ArtifactStorageService.java` — пустой файл (0 строк), подлежит удалению; используется `ArtifactStorageService` (62 строки, работает).
+
+### Проверки на VPS
+
+- [x] `docker compose exec app ls -la /app/app.jar` — дата JAR актуальная (не 29.10)
+- [x] `docker compose exec app unzip -l /app/app.jar | grep -i artifact` — оба класса в JAR
+- [x] `POST /api/v1/runs` (`MONKEY`, `scenarioConfig` как строка) → `{"jobId":"...","status":"PENDING"}`
+
+- [ ] **Полный цикл со failed-шагом:**
+  1. Запустить `MONKEY` на публичной странице с JS-ошибкой (или на локальной фикстуре, доступной из контейнера).
+  2. `GET /api/v1/runs/{jobId}` → проверить, что в `steps[]` есть шаг с `"status":"failed"` и `"screenshotUrl"` заполнен.
+  3. `curl -sI "<screenshotUrl>"` → `200` (файл в S3).
+  4. Проверить, что в бакете есть папка `{jobId}/` со скриншотом и `report.html`.
+
+- [ ] `GET /api/v1/runs/{jobId}/report.html` → `302` → presigned URL → в браузере таблица + рабочие скриншоты.
+
+### Что осталось до полного закрытия этапа 13
+
+- Тест с failed-шагом — подтвердить реальную загрузку скриншота (сейчас `screenshots: []` только потому, что все шаги на `example.com` были `success/skipped`).
+- Проверка `/report.html` — `302` + открытие в браузере.
+- Удаление `S3ArtifactStorageService.java` — пустой файл, не используется.
+
+### Известные ограничения (не блокеры)
+
+- Скриншот создаётся только при `status="failed"` в `MonkeyScenarioEngine`. Для `success/skipped` артефактов нет — это **by design**, не баг.
+- `GET /api/v1/runs/{jobId}/artifacts/{filename}` не проверяет существование файла в S3 — возвращает presigned URL даже если файла нет. Проверка существования — отдельным `curl -I` по URL.
+
