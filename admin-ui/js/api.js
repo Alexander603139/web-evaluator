@@ -190,5 +190,6 @@
         requireAuth, logout,
         showMessage, hideMessage, formatDate, formatDuration,
         API_BASE,
+        isTokenExpired,
     };
 })();
